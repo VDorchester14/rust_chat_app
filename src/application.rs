@@ -1,5 +1,6 @@
 use eframe::egui;
 use chrono::DateTime;
+use std::time::{Duration, Instant};
 
 use crate::server_interface::ServerInterface;
 use crate::message::Message;
@@ -62,11 +63,12 @@ impl Application{
     fn draw_chat_ui(&mut self, ctx: &egui::Context, _frame: &eframe::Frame){
         let mut message_sent = false;
 
-        egui::SidePanel::right("ActiveUsersPanle").show(ctx, |ui|{
+        egui::SidePanel::right("ActiveUsersPanel").show(ctx, |ui|{
             ui.colored_label(
                 egui::Color32::LIGHT_BLUE,
                 "Actice Users"
             );
+            ui.separator();
             for user_state in self.server_interface.user_list.iter() {
                 ui.horizontal(|ui|{
                     ui.label(format!("{} - Status {}", user_state.name, user_state.user_status.as_str()));
@@ -83,21 +85,29 @@ impl Application{
         egui::TopBottomPanel::bottom("TextEntryPanel").show(ctx, |ui|{
             ui.add_space(4.0);
             ui.horizontal(|ui|{
-                let _output = egui::TextEdit::singleline(&mut self.current_message)
-                    .hint_text("Say Hello!")
-                    .id("TextEntry".into())
-                    .show(ui);
+                let response = ui.add_sized(
+                    ui.available_size(),
+                    egui::TextEdit::singleline(&mut self.current_message)
+                        .hint_text("Say Hello!")
+                        .id("TextEntry".into())
+                );
+                if response.changed {
+                    if self.user_state.user_status == UserStatus::Away {
+                        self.user_state.user_status = UserStatus::LoggedIn;
+                    }
+                    self.user_state.last_interaction_time = Instant::now();
+                }
                 ctx.memory_mut(|m|{
                     m.request_focus("TextEntry".into());
                     m.lock_focus("TextEntry".into(), true);
                 });
-                if ctx.input(|i| i.key_pressed(egui::Key::Enter)){
+                let enter_pressed = ctx.input(|i| i.key_pressed(egui::Key::Enter));
+                let message_is_something = !self.current_message.is_empty();
+                let send_clicked = ui.button("Send").clicked();
+                if (enter_pressed || send_clicked) && message_is_something {
                     message_sent = true;
                 }
-                if ui.button("Send").clicked(){
-                    message_sent = true;
-                }
-                 ui.allocate_space(ui.available_size());
+                ui.allocate_space(ui.available_size());
             });
             ui.allocate_space(ui.available_size());
         });

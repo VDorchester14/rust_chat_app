@@ -1,6 +1,8 @@
 use eframe::egui;
+use std::time::{Duration, Instant};
 
-#[derive(Clone)]
+
+#[derive(Clone, PartialEq)]
 pub enum UserStatus {
     LoggedIn,
     Away,
@@ -29,6 +31,7 @@ impl UserStatus {
 pub struct UserState{
     pub name: String,
     pub user_status: UserStatus,
+    pub last_interaction_time: Instant,
 }
 
 impl Default for UserState{
@@ -36,6 +39,7 @@ impl Default for UserState{
         Self {
             name: "".to_owned(),
             user_status: UserStatus::LoggedOut,
+            last_interaction_time: Instant::now(),
         }
     }
 }
