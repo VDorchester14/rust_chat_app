@@ -17,7 +17,7 @@ fn main() {
     };
 
     eframe::run_native(
-        "My Application",
+        "ChadGPT",
         options,
         Box::new(|_cc| Box::new(Application::default()))
     ).expect("Application Crashed");
